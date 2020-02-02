@@ -12,7 +12,7 @@ class FrozenFieldError(Exception):
 class Field:
     _UNSET = object()
 
-    def __init__(self, default=_UNSET, required=True, frozen=False):
+    def __init__(self, default=_UNSET, required=True, frozen=True):
         self._default = default
         self._required = required
         self._frozen = frozen

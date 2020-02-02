@@ -58,7 +58,7 @@ def test_read_config_from_path(test_config_path, test_config):
 
 def test_read_config_assign_new_value(test_config):
     class Section1(manager.Section):
-        string_option = fields.Field()
+        string_option = fields.Field(frozen=False)
 
     class Config(manager.Config):
         section_1 = Section1()
