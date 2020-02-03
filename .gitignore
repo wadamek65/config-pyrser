@@ -1,2 +1,8 @@
 .idea/
 .venv/
+config_pyrser.egg-info/
+dist/
+.pytest_cache
+
+.coverage
+config-pyrser.iml
