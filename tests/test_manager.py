@@ -117,3 +117,30 @@ def test_read_config_unspecified_option(test_config):
         Config(config_parser=test_config)
 
     assert error.value.args[0] == 'Option "unspecified_option" in section "section_1" is required.'
+
+
+def test_allow_multiple_instances(test_config):
+    class Section1(manager.Section):
+        string_option = fields.Field(frozen=False)
+
+    class Config(manager.Config):
+        section_1 = Section1()
+
+    instance_1 = Config(config_parser=test_config)
+    instance_2 = Config(config_parser=test_config)
+
+    assert instance_1.section_1.string_option == instance_2.section_1.string_option
+
+
+def test_reuse_sections(test_config):
+    class CustomSection(manager.Section):
+        string_option = fields.Field()
+
+    class Config(manager.Config):
+        section_1 = CustomSection()
+        section_3 = CustomSection()
+
+    cfg = Config(config_parser=test_config)
+
+    assert cfg.section_1.string_option == test_config.get('section_1', 'string_option')
+    assert cfg.section_3.string_option == test_config.get('section_3', 'string_option')

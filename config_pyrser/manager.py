@@ -1,5 +1,5 @@
 import configparser
-import inspect
+import copy
 
 from config_pyrser import fields
 
@@ -8,22 +8,56 @@ class NoConfigError(Exception):
     pass
 
 
-class Section:
-    def __call__(self, cfg, section):
-        for option in cfg.options(section):
-            try:
-                self.__getattribute__(option)(cfg, section, option)
-            except AttributeError:
-                # Option was not defined in section class
-                continue
+class SectionMeta(type):
+    def __new__(mcs, name, bases, attrs):
+        options = {}
+        for key, value in attrs.items():
+            if isinstance(value, fields.Field):
+                options[key] = copy.copy(value)
 
-        for name, field in inspect.getmembers(self, lambda x: isinstance(x, fields.Field)):
-            # Initialize all fields that have a default value but were not found in config file
-            field(cfg, section, name)
+        for option in options:
+            del attrs[option]
+
+        attrs['_options'] = options
+        return type.__new__(mcs, name, bases, attrs)
+
+
+class Section(metaclass=SectionMeta):
+    def init(self, cfg, section):
+        for option in self._options:
+            self._options[option].init(cfg, section, option)
+
         return self
 
+    def __getattribute__(self, item):
+        try:
+            print(self, super().__getattribute__('_options')[item])
+            return super().__getattribute__('_options')[item].value
+        except (KeyError, AttributeError):
+            return super().__getattribute__(item)
 
-class Config:
+    def __setattr__(self, key, value):
+        try:
+            super().__getattribute__('_options')[key].set(value)
+        except (KeyError, AttributeError):
+            super().__setattr__(key, value)
+
+
+class ConfigMeta(type):
+    def __new__(mcs, name, bases, attrs):
+        sections = {}
+        for key, value in attrs.items():
+            if isinstance(value, Section):
+                sections[key] = copy.copy(value)
+
+        for section in sections:
+            del attrs[section]
+
+        attrs['_sections'] = sections
+        return type.__new__(mcs, name, bases, attrs)
+
+
+class Config(metaclass=ConfigMeta):
     def __init__(self, path=None, config_parser=None, **kwargs):
         if isinstance(path, str):
             cfg = configparser.ConfigParser(**kwargs)
@@ -33,5 +67,11 @@ class Config:
         else:
             raise NoConfigError('No path to config or prepared config specified.')
 
-        for name, section in inspect.getmembers(self, predicate=lambda field: isinstance(field, Section)):
-            section(cfg, name)
+        for section in self._sections:
+            self._sections[section].init(cfg, section)
+
+    def __getattribute__(self, item):
+        try:
+            return super().__getattribute__('_sections')[item]
+        except (KeyError, AttributeError):
+            return super().__getattribute__(item)
