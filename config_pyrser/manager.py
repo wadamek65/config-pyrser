@@ -1,6 +1,8 @@
 import configparser
 import inspect
 
+from config_pyrser import fields
+
 
 class NoConfigError(Exception):
     pass
@@ -12,7 +14,12 @@ class Section:
             try:
                 self.__getattribute__(option)(cfg, section, option)
             except AttributeError:
+                # Option was not defined in section class
                 continue
+
+        for name, field in inspect.getmembers(self, lambda x: isinstance(x, fields.Field)):
+            # Initialize all fields that have a default value but were not found in config file
+            field(cfg, section, name)
         return self
 
 

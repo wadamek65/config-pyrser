@@ -26,11 +26,11 @@ def test_read_config(test_config):
 
     cfg = Config(config_parser=test_config)
 
-    assert cfg.section_1.string_option is test_config.get('section_1', 'string_option')
-    assert cfg.section_1.bool_option is test_config.getboolean('section_1', 'bool_option')
-    assert cfg.section_1.int_option is test_config.getint('section_1', 'int_option')
+    assert cfg.section_1.string_option == test_config.get('section_1', 'string_option')
+    assert cfg.section_1.bool_option == test_config.getboolean('section_1', 'bool_option')
+    assert cfg.section_1.int_option == test_config.getint('section_1', 'int_option')
     assert cfg.section_1.float_option == test_config.getfloat('section_1', 'float_option')
-    assert cfg.section_2.option is test_config.get('section_2', 'option')
+    assert cfg.section_2.option == test_config.get('section_2', 'option')
 
 
 def test_read_config_from_path(test_config_path, test_config):
@@ -50,7 +50,7 @@ def test_read_config_from_path(test_config_path, test_config):
     cfg = Config(path=test_config_path)
 
     assert cfg.section_1.string_option == test_config.get('section_1', 'string_option')
-    assert cfg.section_1.bool_option is test_config.getboolean('section_1', 'bool_option')
+    assert cfg.section_1.bool_option == test_config.getboolean('section_1', 'bool_option')
     assert cfg.section_1.int_option == test_config.getint('section_1', 'int_option')
     assert cfg.section_1.float_option == test_config.getfloat('section_1', 'float_option')
     assert cfg.section_2.option == test_config.get('section_2', 'option')
@@ -65,7 +65,7 @@ def test_read_config_assign_new_value(test_config):
 
     cfg = Config(config_parser=test_config)
 
-    assert cfg.section_1.string_option is test_config.get('section_1', 'string_option')
+    assert cfg.section_1.string_option == test_config.get('section_1', 'string_option')
 
     new_value = 'new_value'
     cfg.section_1.string_option = new_value
@@ -81,9 +81,39 @@ def test_read_config_frozen_option(test_config):
 
     cfg = Config(config_parser=test_config)
 
-    assert cfg.section_1.string_option is test_config.get('section_1', 'string_option')
+    assert cfg.section_1.string_option == test_config.get('section_1', 'string_option')
 
     with pytest.raises(fields.FrozenFieldError) as error:
         cfg.section_1.string_option = 'new value'
 
     assert error.value.args[0] == 'Cannot set frozen field "string_option" in section "section_1"'
+
+
+def test_read_config_unspecified_option_with_default(test_config):
+    default_value = 'default_value'
+
+    class Section1(manager.Section):
+        unspecified_option = fields.Field(default=default_value)
+        unspecified_option_2 = fields.IntField(default=10)
+
+    class Config(manager.Config):
+        section_1 = Section1()
+
+    cfg = Config(config_parser=test_config)
+
+    assert cfg.section_1.unspecified_option == default_value
+    assert cfg.section_1.unspecified_option_2 == 10
+
+
+def test_read_config_unspecified_option(test_config):
+    class Section1(manager.Section):
+        unspecified_option = fields.Field()
+        unspecified_option_2 = fields.IntField()
+
+    class Config(manager.Config):
+        section_1 = Section1()
+
+    with pytest.raises(fields.MissingFieldError) as error:
+        Config(config_parser=test_config)
+
+    assert error.value.args[0] == 'Option "unspecified_option" in section "section_1" is required.'
