@@ -8,13 +8,13 @@ maintainers = ["wadamek65 <wadamek65@gmail.com>"]
 repository = "https://github.com/wadamek65/config-pyrser"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9 || ^3.10 || ^3.11 || ^3.12"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
-pytest-cov = "^2.8.1"
-pylint = "^2.4.4"
+[tool.poetry.group.dev.dependencies]
+pytest = "8.0.0"
+pytest-cov = "4.1.0"
+pylint = "3.0.3"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"

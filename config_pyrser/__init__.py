@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 
 from config_pyrser.fields import BoolField, Field, FloatField, FrozenFieldError, IntField, MissingFieldError
 from config_pyrser.manager import Config, NoConfigError, Section
